@@ -355,6 +355,7 @@ tbody td:last-child{border-right:none}
   <div class="print-doc" id="printDoc"></div>
   <div class="print-actions">
     <button class="btn btn-primary" onclick="window.print()">🖨 Imprimir</button>
+    <button class="btn btn-outline" onclick="salvarPDF()">📄 Salvar PDF</button>
     <button class="btn btn-outline" onclick="fecharImpressao()">✕ Fechar</button>
   </div>
 </div>
@@ -362,6 +363,7 @@ tbody td:last-child{border-right:none}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 <script>
 
 // ── FIREBASE: configuração e inicialização ──
@@ -915,6 +917,25 @@ function imprimirOS(id){
     </div>
   `;
   document.getElementById('printModal').classList.add('open');
+  window._osAtualImpressao=o;
+}
+
+function salvarPDF(){
+  const el=document.getElementById('printDoc');
+  const o=window._osAtualImpressao||{};
+  const nomeCliente=(o.cliente||'cliente').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
+  const nomeArquivo='OS_'+(o.id||'0000')+'_'+nomeCliente+'.pdf';
+  if(typeof html2pdf==='undefined'){
+    alert('⚠ Não foi possível carregar o gerador de PDF. Verifique a sua ligação à internet e tente novamente.');
+    return;
+  }
+  html2pdf().set({
+    margin:0,
+    filename:nomeArquivo,
+    image:{type:'jpeg',quality:0.98},
+    html2canvas:{scale:2,useCORS:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  }).from(el).save();
 }
 
 function fecharImpressao(){document.getElementById('printModal').classList.remove('open');}
