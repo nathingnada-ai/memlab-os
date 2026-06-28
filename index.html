@@ -91,9 +91,9 @@ tbody td:last-child{border-right:none}
 .print-actions{position:fixed;bottom:24px;right:24px;display:flex;gap:10px;z-index:10000}
 
 /* PRINT STYLES */
-.p-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.p-header{display:grid;grid-template-columns:1fr 2fr 1fr;align-items:start;margin-bottom:10px}
 .p-logo-sub{font-size:7px;letter-spacing:2px;color:#666;text-transform:uppercase;margin-top:3px}
-.p-title{text-align:center;flex:1;padding:0 20px}
+.p-title{text-align:center;padding:0 10px}
 .p-title h2{font-size:17px;font-weight:700;margin-bottom:4px}
 .p-title p{font-size:11px;color:#333;margin-top:2px}
 .p-meta{font-size:10px;color:#666;white-space:nowrap}
@@ -843,8 +843,8 @@ function imprimirOS(id){
       </div>
       <div class="p-title">
         <h2>Recibo de Entrada</h2>
-        <p>Condições de Serviço</p>
       </div>
+      <div></div>
     </div>
     <hr class="p-divider">
 
@@ -912,6 +912,7 @@ function imprimirOS(id){
     </div>
 
     <div class="p-footer">
+      <div style="text-align:left;font-size:9px;font-weight:700;color:#333;margin-bottom:4px">Condições de Serviço</div>
       <strong>Política de Armazenamento — memlab Electronics Repair</strong><br>
       Após a comunicação da disponibilidade do equipamento para levantamento, o cliente dispõe de <strong>15 dias</strong> para recolher o artigo sem qualquer custo adicional. Findo esse prazo, será cobrada uma <strong>taxa de armazenamento de 1€ (+ IVA) por cada dia de atraso</strong>, destinada a cobrir custos de espaço e segurança. Esta taxa é acumulável e deverá ser liquidada no momento da entrega. Caso o equipamento não seja levantado e as taxas acumuladas ultrapassem o valor comercial do artigo, a memlab reserva-se o direito de, nos termos da lei portuguesa, considerar o bem abandonado e proceder à sua reciclagem ou alienação para cobrir os prejuízos. A assinatura ou aceitação deste recibo constitui concordância com as presentes condições. — <strong>Artigo 1318.º do Código Civil Português (Direito de Retenção)</strong>.
     </div>
