@@ -253,7 +253,7 @@ tbody td:last-child{border-right:none}
           </div>
           <div id="formNovoCliente" style="display:none">
             <hr class="divider">
-            <p style="font-weight:700;color:#1a1a2e;margin-bottom:12px;font-size:14px">Cadastrar novo cliente</p>
+            <p id="clienteFormTitle" style="font-weight:700;color:#1a1a2e;margin-bottom:12px;font-size:14px">Cadastrar novo cliente</p>
             <div class="form-row c2">
               <div class="form-group"><label>Nome completo *</label><input type="text" id="nc_nome"></div>
               <div class="form-group"><label>Telefone</label><input type="tel" id="nc_tel" placeholder="+351 9xx xxx xxx"></div>
@@ -268,7 +268,8 @@ tbody td:last-child{border-right:none}
             <div class="form-row c1">
               <div class="form-group"><label>Observações</label><textarea id="nc_obs"></textarea></div>
             </div>
-            <button class="btn btn-success" onclick="guardarCliente()">✓ Guardar cliente</button>
+            <button class="btn btn-success" id="btnGuardarCliente" onclick="guardarCliente()">✓ Guardar cliente</button>
+            <button class="btn btn-danger" id="btnEliminarCliente" style="display:none" onclick="eliminarClienteAtual()">🗑 Eliminar cliente</button>
           </div>
         </div>
 
@@ -703,7 +704,10 @@ function renderClientes(q){
     <div class="client-detail-panel" id="cdp_${i}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <strong style="font-size:13px">${c.nome}</strong>
-        <button class="btn btn-success btn-sm" onclick="selecionarCliente('${c.nome}')">✓ Selecionar</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-success btn-sm" onclick="selecionarCliente('${c.nome}')">✓ Selecionar</button>
+          <button class="btn btn-outline btn-sm" onclick="editarCliente('${c._docId}')">✎ Editar</button>
+        </div>
       </div>
       <div class="detail-grid">
         <div class="detail-item"><span>Telefone:</span> ${c.tel||'—'}</div>
@@ -734,24 +738,72 @@ function selecionarCliente(nome){
   openDetail=null;
 }
 function limparCliente(){selectedClient=null;document.getElementById('selectedClientDiv').style.display='none';}
+let editingClienteDocId=null;
 function mostrarFormCliente(){
+  editingClienteDocId=null;
+  document.getElementById('clienteFormTitle').textContent='Cadastrar novo cliente';
+  document.getElementById('btnGuardarCliente').textContent='✓ Guardar cliente';
+  document.getElementById('btnEliminarCliente').style.display='none';
   document.getElementById('formNovoCliente').style.display='block';
   ['nc_nome','nc_tel','nc_email','nc_nif','nc_morada','nc_obs'].forEach(id=>document.getElementById(id).value='');
+}
+function editarCliente(docId){
+  const c=clientes.find(x=>x._docId===docId);
+  if(!c){alert('⚠ Cliente não encontrado (pode já ter sido removido).');return;}
+  editingClienteDocId=docId;
+  document.getElementById('clienteFormTitle').textContent='Editar cliente';
+  document.getElementById('btnGuardarCliente').textContent='✓ Atualizar cliente';
+  document.getElementById('btnEliminarCliente').style.display='inline-block';
+  document.getElementById('nc_nome').value=c.nome||'';
+  document.getElementById('nc_tel').value=c.tel||'';
+  document.getElementById('nc_email').value=c.email||'';
+  document.getElementById('nc_nif').value=c.nif||'';
+  document.getElementById('nc_morada').value=c.morada||'';
+  document.getElementById('nc_obs').value=c.obs||'';
+  document.getElementById('formNovoCliente').style.display='block';
+  openDetail=null;
 }
 async function guardarCliente(){
   const nome=document.getElementById('nc_nome').value.trim();
   if(!nome){alert('Insira o nome do cliente');return;}
-  const novoCliente={nome,tel:document.getElementById('nc_tel').value,email:document.getElementById('nc_email').value,nif:document.getElementById('nc_nif').value,morada:document.getElementById('nc_morada').value,obs:document.getElementById('nc_obs').value};
+  const dadosCliente={nome,tel:document.getElementById('nc_tel').value,email:document.getElementById('nc_email').value,nif:document.getElementById('nc_nif').value,morada:document.getElementById('nc_morada').value,obs:document.getElementById('nc_obs').value};
   try{
-    await db.collection('clientes').add(novoCliente);
-    selectedClient=novoCliente;
-    document.getElementById('selectedClientName').textContent=nome;
-    document.getElementById('selectedClientPhone').textContent=novoCliente.tel||'';
-    document.getElementById('selectedClientDiv').style.display='block';
+    if(editingClienteDocId){
+      await db.collection('clientes').doc(editingClienteDocId).set(dadosCliente,{merge:true});
+      if(selectedClient&&selectedClient._docId===editingClienteDocId){
+        selectedClient=Object.assign({},dadosCliente,{_docId:editingClienteDocId});
+        document.getElementById('selectedClientName').textContent=nome;
+        document.getElementById('selectedClientPhone').textContent=dadosCliente.tel||'';
+      }
+      editingClienteDocId=null;
+    }else{
+      await db.collection('clientes').add(dadosCliente);
+      selectedClient=dadosCliente;
+      document.getElementById('selectedClientName').textContent=nome;
+      document.getElementById('selectedClientPhone').textContent=dadosCliente.tel||'';
+      document.getElementById('selectedClientDiv').style.display='block';
+    }
     document.getElementById('formNovoCliente').style.display='none';
   }catch(e){
     console.error('Erro ao guardar cliente:',e);
     alert('⚠ Não foi possível guardar o cliente. Verifique a sua ligação à internet e tente novamente.');
+  }
+}
+
+async function eliminarClienteAtual(){
+  if(!editingClienteDocId)return;
+  if(!confirm('Eliminar este cliente definitivamente?\n\nIsto NÃO apaga as ordens de serviço já criadas para ele, apenas o ficha do cliente.'))return;
+  try{
+    await db.collection('clientes').doc(editingClienteDocId).delete();
+    if(selectedClient&&selectedClient._docId===editingClienteDocId){
+      selectedClient=null;
+      document.getElementById('selectedClientDiv').style.display='none';
+    }
+    editingClienteDocId=null;
+    document.getElementById('formNovoCliente').style.display='none';
+  }catch(e){
+    console.error('Erro ao eliminar cliente:',e);
+    alert('⚠ Não foi possível eliminar o cliente. Verifique a sua ligação à internet e tente novamente.');
   }
 }
 
