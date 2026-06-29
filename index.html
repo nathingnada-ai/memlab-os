@@ -110,7 +110,8 @@ tbody td:last-child{border-right:none}
 .p-sign{margin-top:32px;display:flex;justify-content:center}
 .p-sign-inner{text-align:center}
 .p-sign-line{border-bottom:1px solid #000;width:220px;margin:0 auto 6px}
-.p-footer{position:absolute;bottom:10mm;left:14mm;right:14mm;border-top:1px solid #bbb;padding-top:5px;font-size:7.5px;color:#555;line-height:1.6}
+.p-footer{position:absolute;bottom:10mm;left:14mm;right:14mm;font-size:7.5px;color:#555;line-height:1.6}
+.p-footer-policy{border-top:1px solid #bbb;padding-top:5px}
 
 @page{margin:0;size:A4}
 @media print{
@@ -913,8 +914,10 @@ function imprimirOS(id){
 
     <div class="p-footer">
       <div style="text-align:left;font-size:9px;font-weight:700;color:#333;margin-bottom:4px">Condições de Serviço</div>
-      <strong>Política de Armazenamento — memlab Electronics Repair</strong><br>
-      Após a comunicação da disponibilidade do equipamento para levantamento, o cliente dispõe de <strong>15 dias</strong> para recolher o artigo sem qualquer custo adicional. Findo esse prazo, será cobrada uma <strong>taxa de armazenamento de 1€ (+ IVA) por cada dia de atraso</strong>, destinada a cobrir custos de espaço e segurança. Esta taxa é acumulável e deverá ser liquidada no momento da entrega. Caso o equipamento não seja levantado e as taxas acumuladas ultrapassem o valor comercial do artigo, a memlab reserva-se o direito de, nos termos da lei portuguesa, considerar o bem abandonado e proceder à sua reciclagem ou alienação para cobrir os prejuízos. A assinatura ou aceitação deste recibo constitui concordância com as presentes condições. — <strong>Artigo 1318.º do Código Civil Português (Direito de Retenção)</strong>.
+      <div class="p-footer-policy">
+        <strong>Política de Armazenamento — memlab Electronics Repair</strong><br>
+        Após a comunicação da disponibilidade do equipamento para levantamento, o cliente dispõe de <strong>15 dias</strong> para recolher o artigo sem qualquer custo adicional. Findo esse prazo, será cobrada uma <strong>taxa de armazenamento de 1€ (+ IVA) por cada dia de atraso</strong>, destinada a cobrir custos de espaço e segurança. Esta taxa é acumulável e deverá ser liquidada no momento da entrega. Caso o equipamento não seja levantado e as taxas acumuladas ultrapassem o valor comercial do artigo, a memlab reserva-se o direito de, nos termos da lei portuguesa, considerar o bem abandonado e proceder à sua reciclagem ou alienação para cobrir os prejuízos. A assinatura ou aceitação deste recibo constitui concordância com as presentes condições. — <strong>Artigo 1318.º do Código Civil Português (Direito de Retenção)</strong>.
+      </div>
     </div>
   `;
   document.getElementById('printModal').classList.add('open');
@@ -935,8 +938,12 @@ function salvarPDF(){
     filename:nomeArquivo,
     image:{type:'jpeg',quality:0.98},
     html2canvas:{scale:2,useCORS:true},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  }).from(el).save();
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:['avoid-all']}
+  }).from(el).toPdf().get('pdf').then(function(pdf){
+    const total=pdf.internal.getNumberOfPages();
+    for(let i=total;i>1;i--){ pdf.deletePage(i); }
+  }).save(nomeArquivo);
 }
 
 function fecharImpressao(){document.getElementById('printModal').classList.remove('open');}
